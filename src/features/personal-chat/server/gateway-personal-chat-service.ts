@@ -20,6 +20,7 @@ import {
   PersonalChatRegisterInput,
   PersonalChatService,
   SearchPersonalUsersInput,
+  SendChatInviteInput,
   SendPersonalMessageInput,
 } from "@/features/personal-chat/server/personal-chat-service"
 import {
@@ -120,6 +121,12 @@ const trimConversationMessages = (
   return {
     messages: messagesByAge.slice(-requestedLimit),
     hasMoreHistory: messagesByAge.length > requestedLimit,
+  }
+}
+
+interface TransportChatInviteResponse {
+  data: {
+    sent: true
   }
 }
 
@@ -479,6 +486,32 @@ export const createGatewayPersonalChatService = (): PersonalChatService => {
           throw mapGatewayConversationNotFoundError(input.conversationId)
         }
 
+        if (isGatewayBadRequestError(error)) {
+          throw mapGatewayBadRequestError(error)
+        }
+
+        throw error
+      }
+    })
+  },
+
+  async sendChatInvite(context, input: SendChatInviteInput) {
+    return withGatewaySession(context, async (session) => {
+      try {
+        const response = await createGatewayFetch<TransportChatInviteResponse>({
+          path: "/chat-invites",
+          method: "POST",
+          accessToken: session.accessToken,
+          body: {
+            email: input.email,
+            inviteUrl: input.inviteUrl,
+          },
+        })
+
+        return {
+          sent: response.data.sent,
+        }
+      } catch (error) {
         if (isGatewayBadRequestError(error)) {
           throw mapGatewayBadRequestError(error)
         }

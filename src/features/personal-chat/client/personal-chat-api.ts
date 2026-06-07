@@ -35,6 +35,10 @@ const directConversationResponseSchema = z.object({
   conversation: conversationSummarySchema,
 })
 
+const chatInviteResponseSchema = z.object({
+  sent: z.literal(true),
+})
+
 const messageResponseSchema = z.object({
   message: chatMessageSchema,
 })
@@ -79,6 +83,11 @@ export interface PersonalChatRegisterInput {
 
 export interface OpenPersonalChatDirectConversationInput {
   participantId: string
+}
+
+export interface SendPersonalChatInviteInput {
+  email: string
+  inviteUrl: string
 }
 
 export interface SearchPersonalUsersInput {
@@ -307,6 +316,20 @@ export const openOrCreatePersonalChatDirectConversation = async (
   )
 
   return response.conversation
+}
+
+export const sendPersonalChatInvite = async (
+  input: SendPersonalChatInviteInput,
+) => {
+  const response = await fetchPersonalChat("/chat-invites", chatInviteResponseSchema, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify(input),
+  })
+
+  return response
 }
 
 export const sendPersonalChatMessage = async (

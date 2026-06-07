@@ -202,4 +202,16 @@ export const createMockPersonalChatService = (): PersonalChatService => ({
 
     return realtimeSessionBootstrapSchema.parse(clone(realtimeSession))
   },
+
+  async sendChatInvite(context) {
+    const session = mockPersonalChatStore.getSession(context.sessionToken)
+
+    if (!session.isAuthenticated) {
+      throw new PersonalChatUnauthorizedError()
+    }
+
+    return {
+      sent: true as const,
+    }
+  },
 })
