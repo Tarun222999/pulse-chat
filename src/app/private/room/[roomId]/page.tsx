@@ -16,6 +16,7 @@ import {
   PersonalChatApiError,
   sendPersonalChatInvite,
 } from "@/features/personal-chat/client/personal-chat-api"
+import { buildAccountLoginRedirectPath } from "@/features/auth/route-guard-paths"
 import { useUsername } from "@/hooks/use-username"
 import { client } from "@/lib/client"
 import { encrypt } from "@/lib/encryption"
@@ -65,7 +66,7 @@ function InviteIcon() {
 const getInviteErrorMessage = (error: unknown) => {
   if (error instanceof PersonalChatApiError) {
     if (error.status === 401) {
-      return "Sign in through Personal inbox to send email invites."
+      return "Sign in to send email invites."
     }
 
     return error.message || "Unable to send the invite right now."
@@ -95,6 +96,7 @@ export default function PrivateRoomPage() {
   const [inviteEmail, setInviteEmail] = useState("")
   const [inviteError, setInviteError] = useState<string | null>(null)
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null)
+  const [inviteNeedsSignIn, setInviteNeedsSignIn] = useState(false)
   const [pendingMessages, setPendingMessages] = useState<PendingMessage[]>([])
 
   const { data } = useQuery({
@@ -332,12 +334,16 @@ export default function PrivateRoomPage() {
     onMutate: () => {
       setInviteError(null)
       setInviteSuccess(null)
+      setInviteNeedsSignIn(false)
     },
     onSuccess: (_data, email) => {
       setInviteEmail("")
       setInviteSuccess(`Invite sent to ${email}.`)
     },
     onError: (error) => {
+      setInviteNeedsSignIn(
+        error instanceof PersonalChatApiError && error.status === 401,
+      )
       setInviteError(getInviteErrorMessage(error))
     },
   })
@@ -348,6 +354,7 @@ export default function PrivateRoomPage() {
     const email = inviteEmail.trim()
     setInviteError(null)
     setInviteSuccess(null)
+    setInviteNeedsSignIn(false)
 
     if (!email) {
       setInviteError("Enter an email address.")
@@ -365,6 +372,7 @@ export default function PrivateRoomPage() {
   const openInviteDialog = () => {
     setInviteError(null)
     setInviteSuccess(null)
+    setInviteNeedsSignIn(false)
     setIsInviteDialogOpen(true)
   }
 
@@ -376,6 +384,12 @@ export default function PrivateRoomPage() {
     setIsInviteDialogOpen(false)
     setInviteError(null)
     setInviteSuccess(null)
+    setInviteNeedsSignIn(false)
+  }
+
+  const handleInviteSignIn = () => {
+    const currentRoomPath = `${globalThis.location.pathname}${globalThis.location.search}${globalThis.location.hash}`
+    router.push(buildAccountLoginRedirectPath(currentRoomPath))
   }
 
   const { mutate: destroyRoom, isPending: isDestroyPending } = useMutation({
@@ -681,6 +695,15 @@ export default function PrivateRoomPage() {
               ) : null}
 
               <div className="flex items-center justify-end gap-3 pt-1">
+                {inviteNeedsSignIn ? (
+                  <button
+                    type="button"
+                    onClick={handleInviteSignIn}
+                    className="h-10 rounded border border-sky-400/60 bg-sky-400/10 px-4 text-xs font-bold text-sky-200 transition-colors hover:bg-sky-400 hover:text-black"
+                  >
+                    Sign in
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={closeInviteDialog}

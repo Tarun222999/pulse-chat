@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { beforeEach, describe, expect, it, vi } from "vitest"
+import { PersonalChatApiError } from "@/features/personal-chat/client/personal-chat-api"
 import PrivateRoomPage from "./page"
 
 const {
@@ -173,5 +174,33 @@ describe("PrivateRoomPage", () => {
     expect(
       await screen.findByText("Invite sent to friend@example.com."),
     ).toBeInTheDocument()
+  })
+
+  it("redirects unauthenticated users to login and returns to the room", async () => {
+    mockSendPersonalChatInvite.mockRejectedValueOnce(
+      new PersonalChatApiError("Unauthorized", 401, {
+        error: "Unauthorized",
+      }),
+    )
+
+    renderRoom()
+
+    fireEvent.click(screen.getByRole("button", { name: "Invite by email" }))
+    fireEvent.change(screen.getByLabelText("Email address"), {
+      target: {
+        value: "friend@example.com",
+      },
+    })
+    fireEvent.click(screen.getByRole("button", { name: /Send invite/i }))
+
+    expect(await screen.findByText("Sign in to send email invites.")).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }))
+
+    expect(mockPush).toHaveBeenCalledWith(
+      `/login?next=${encodeURIComponent(
+        `${window.location.pathname}${window.location.search}${window.location.hash}`,
+      )}`,
+    )
   })
 })
