@@ -1,8 +1,17 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { PersonalLoginForm } from "@/features/personal-chat/client"
 import { resolveAccountLoginSuccessPath } from "@/features/auth/route-guard-paths"
 import { redirectAuthenticatedAccountRoute } from "@/features/auth/server"
 import { personalChatServerConfig } from "@/features/personal-chat/server"
+
+export const metadata: Metadata = {
+  title: "Sign In",
+  robots: {
+    index: false,
+    follow: false,
+  },
+}
 
 export default async function LoginPage({
   searchParams,

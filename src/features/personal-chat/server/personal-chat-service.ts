@@ -59,6 +59,15 @@ export interface CreateRealtimeSessionInput {
   conversationId: string
 }
 
+export interface SendChatInviteInput {
+  email: string
+  inviteUrl: string
+}
+
+export interface SendChatInviteResult {
+  sent: true
+}
+
 export interface PersonalChatService {
   getSession(context: PersonalChatServiceContext): Promise<PersonalSession>
   getDmCandidates(context: PersonalChatServiceContext): Promise<DmCandidate[]>
@@ -93,6 +102,10 @@ export interface PersonalChatService {
     context: PersonalChatServiceContext,
     input: CreateRealtimeSessionInput,
   ): Promise<RealtimeSessionBootstrap>
+  sendChatInvite(
+    context: PersonalChatServiceContext,
+    input: SendChatInviteInput,
+  ): Promise<SendChatInviteResult>
 }
 
 export class PersonalChatConversationNotFoundError extends Error {

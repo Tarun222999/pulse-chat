@@ -47,6 +47,11 @@ const directConversationBodySchema = z.object({
   participantId: z.string().min(1),
 })
 
+const chatInviteBodySchema = z.object({
+  email: z.string().trim().email(),
+  inviteUrl: z.string().url(),
+})
+
 const userSearchQuerySchema = z.object({
   query: z.string().trim().min(3).max(255),
   limit: z.coerce.number().int().min(1).max(25).optional(),
@@ -134,6 +139,10 @@ const conversationResponseSchema = z.object({
 
 const directConversationResponseSchema = z.object({
   conversation: conversationSummarySchema,
+})
+
+const chatInviteResponseSchema = z.object({
+  sent: z.literal(true),
 })
 
 const messageResponseSchema = z.object({
@@ -413,6 +422,24 @@ export const personalChatApi = personalChatApiBase
         400: badRequestSchema,
         401: unauthorizedSchema,
         404: participantNotFoundSchema,
+      },
+    },
+  )
+  .post(
+    "/chat-invites",
+    async ({ body, cookie }) => {
+      const service = getPersonalChatService()
+      return service.sendChatInvite(
+        { sessionToken: getPersonalChatSessionToken(cookie) },
+        body,
+      )
+    },
+    {
+      body: chatInviteBodySchema,
+      response: {
+        200: chatInviteResponseSchema,
+        400: badRequestSchema,
+        401: unauthorizedSchema,
       },
     },
   )

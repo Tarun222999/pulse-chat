@@ -190,6 +190,54 @@ describe("createGatewayPersonalChatService.searchUsers", () => {
   })
 })
 
+describe("createGatewayPersonalChatService.sendChatInvite", () => {
+  beforeEach(() => {
+    mockCreateGatewayFetch.mockReset()
+    mockFetchGatewayUser.mockReset()
+    mockWithGatewaySession.mockReset()
+  })
+
+  it("forwards chat invite emails to the gateway with the session token", async () => {
+    mockWithGatewaySession.mockImplementationOnce(async (_context, action) =>
+      action({
+        accessToken: "access-token",
+        user: {
+          id: "user-1",
+        },
+      }),
+    )
+    mockCreateGatewayFetch.mockResolvedValueOnce({
+      data: {
+        sent: true,
+      },
+    })
+
+    const service = createGatewayPersonalChatService()
+    const result = await service.sendChatInvite(
+      {
+        sessionToken: "gateway-session-1",
+      },
+      {
+        email: "friend@example.com",
+        inviteUrl: "https://frontend.example.com/personal",
+      },
+    )
+
+    expect(mockCreateGatewayFetch).toHaveBeenCalledWith({
+      path: "/chat-invites",
+      method: "POST",
+      accessToken: "access-token",
+      body: {
+        email: "friend@example.com",
+        inviteUrl: "https://frontend.example.com/personal",
+      },
+    })
+    expect(result).toEqual({
+      sent: true,
+    })
+  })
+})
+
 describe("createGatewayPersonalChatService.getConversationDetail", () => {
   beforeEach(() => {
     mockCreateGatewayFetch.mockReset()

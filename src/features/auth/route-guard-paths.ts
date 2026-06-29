@@ -1,7 +1,7 @@
 export const accountHomePath = "/personal"
 export const accountLoginPath = "/login"
 
-const protectedAccountPathPrefixes = ["/personal", "/ai"] as const
+const protectedAccountPathPrefixes = ["/personal", "/ai", "/private"] as const
 const legacyAccountLoginPaths = ["/personal/login"] as const
 
 const getPathname = (value: string) => value.split(/[?#]/, 1)[0] ?? value
