@@ -140,6 +140,10 @@ const createPersistedTextStreamResponse = ({
           controller.enqueue(textEncoder.encode(chunk))
         }
 
+        if (assistantText.length === 0) {
+          throw new Error("AI provider returned an empty response")
+        }
+
         await updateAiMessage(context, {
           messageId: assistantMessage.id,
           content: assistantText,
@@ -228,10 +232,12 @@ const createAssistantTextStreamResponse = async (
     input.conversationId,
     aiChatServerConfig.maxHistoryMessages,
   )
+  // The response loop below owns client cancellation. Passing the incoming
+  // request signal to the provider can make slower streams end without a text
+  // delta when the route adapter closes its request lifecycle.
   const result = streamText({
     model: resolvedProviderModel.model,
     messages: buildModelMessages(recentMessages),
-    abortSignal: input.abortSignal,
   })
 
   return createPersistedTextStreamResponse({
